@@ -1,5 +1,8 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product;
 
+/**
+ * Represents an actual product in our vending machine
+ */
 public class Product {
     private final ProductId productId;
     private final String name;
@@ -12,15 +15,15 @@ public class Product {
         this.price = price;
     }
 
-    public ProductId getProductId() {
+    public ProductId productId() {
         return productId;
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public double getPrice() {
+    public double price() {
         return price;
     }
 }
