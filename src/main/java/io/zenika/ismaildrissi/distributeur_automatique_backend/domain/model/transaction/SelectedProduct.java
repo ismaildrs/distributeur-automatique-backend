@@ -18,7 +18,15 @@ public class SelectedProduct {
     private final double priceAtSelection;
 
     public SelectedProduct(Product product){
-        this.productId = product.getProductId();
-        this.priceAtSelection = product.getPrice();
+        this.productId = product.productId();
+        this.priceAtSelection = product.price();
+    }
+
+    public ProductId productId() {
+        return productId;
+    }
+
+    public double priceAtSelection() {
+        return priceAtSelection;
     }
 }

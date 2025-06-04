@@ -1,4 +1,9 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction;
 
-public record TransactionResult() {
+import java.util.List;
+
+public record TransactionResult(
+        List<SelectedProduct> selectedProducts,
+        List<Money> returnedMoney
+) {
 }
