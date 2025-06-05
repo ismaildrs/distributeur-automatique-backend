@@ -30,9 +30,10 @@ public class Transaction {
     public void addProduct(Product product) {
         if (status != TransactionStatus.IN_PROGRESS) {
             throw new IllegalTransactionStateException("Cannot add products to a completed transaction.");
-        } else if (product.price() > totalCost()) {
-            selectedProducts.add(new SelectedProduct(product));
+        } else if (product.price() < totalInsertedAmount()) {
+            throw new InsufficientFundsException("Cannot add product due to insufficient funds.");
         }
+        selectedProducts.add(new SelectedProduct(product));
     }
 
     public void insertMoney(Money money) {
@@ -63,7 +64,7 @@ public class Transaction {
             throw new IllegalTransactionStateException("Transaction is already completed.");
         }
         double totalCost = totalCost();
-        if (totalCost >= 0){
+        if (totalCost < 0){
             throw new InsufficientFundsException("Inserted amount is less than the total price.");
         }
         status = TransactionStatus.COMPLETED;

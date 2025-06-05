@@ -12,7 +12,7 @@ import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.prod
 public class SelectedProduct {
     private final ProductId productId;
     /**
-     * priceAtSelection is used to keep track of the price at selling
+     * priceAtSelection is used to store the price at selling time
      * If price changed later, we could keep track of old prices.
      */
     private final double priceAtSelection;
