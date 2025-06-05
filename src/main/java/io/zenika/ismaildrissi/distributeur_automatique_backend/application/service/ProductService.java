@@ -1,0 +1,13 @@
+package io.zenika.ismaildrissi.distributeur_automatique_backend.application.service;
+
+import io.zenika.ismaildrissi.distributeur_automatique_backend.application.dto.ProductDTO;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface ProductRepository {
+
+    public List<ProductDTO> listProducts();
+    public ProductDTO getProductById(UUID productId);
+
+}

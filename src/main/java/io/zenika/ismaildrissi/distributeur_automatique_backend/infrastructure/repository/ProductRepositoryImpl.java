@@ -27,7 +27,6 @@ public class ProductRepositoryImpl implements ProductRepository{
                 .map(productMapper::toDmain);
     }
 
-
     @Override
     public List<Product> findAll() {
         return springDataProductRepository.findAll().stream().map(productMapper::toDmain).collect(Collectors.toList());

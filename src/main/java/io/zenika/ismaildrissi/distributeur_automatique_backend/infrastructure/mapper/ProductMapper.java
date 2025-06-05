@@ -12,7 +12,7 @@ public class ProductMapper {
 
     ModelMapper modelMapper;
 
-    public Product toDmain(ProductEntity productEntity) {
+    public Product toDomain(ProductEntity productEntity) {
         return modelMapper.map(productEntity, Product.class);
     }
 
