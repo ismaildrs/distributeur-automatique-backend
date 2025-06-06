@@ -29,46 +29,36 @@ public class VendingMachineConfig {
 
     private List<Money> getInitialChange() {
         return List.of(
-                // 0.5 x 5
                 new Money(0.5), new Money(0.5), new Money(0.5), new Money(0.5), new Money(0.5),
-
-                // 1 x 5
                 new Money(1), new Money(1), new Money(1), new Money(1), new Money(1),
-
-                // 2 x 5
                 new Money(2), new Money(2), new Money(2), new Money(2), new Money(2),
-
-                // 5 x 4
                 new Money(5), new Money(5), new Money(5), new Money(5),
-
-                // 10 x 3
                 new Money(10), new Money(10), new Money(10)
         );
     }
 
-
-        private void seedInitialProducts() {
+    private void seedInitialProducts() {
         if (vendingMachineRepository.findAllProducts().isEmpty()) {
-            vendingMachineRepository.saveProduct(new Product(
-                    "Energy Drink",
-                    20.0,
-                    new ProductId(UUID.randomUUID()),
-                    3
-            ));
+            List<Product> products = List.of(
+                    createProduct("Energy Drink", 20.0, 3),
+                    createProduct("Water Bottle", 1.5, 10),
+                    createProduct("Sandwich", 4.0, 5),
+                    createProduct("Chocolate Bar", 2.0, 7),
+                    createProduct("Chips", 3.0, 6),
+                    createProduct("Soda Can", 2.5, 8),
+                    createProduct("Juice Box", 2.2, 6),
+                    createProduct("Gum Pack", 1.0, 15),
+                    createProduct("Granola Bar", 2.8, 4),
+                    createProduct("Cookies", 3.5, 5),
+                    createProduct("Iced Tea", 2.7, 5),
+                    createProduct("Protein Bar", 3.2, 3)
+            );
 
-            vendingMachineRepository.saveProduct(new Product(
-                    "Water Bottle",
-                    1.5,
-                    new ProductId(UUID.randomUUID()),
-                    10
-            ));
-
-            vendingMachineRepository.saveProduct(new Product(
-                    "Sandwich",
-                    4.0,
-                    new ProductId(UUID.randomUUID()),
-                    5
-            ));
+            products.forEach(vendingMachineRepository::saveProduct);
         }
+    }
+
+    private Product createProduct(String name, double price, int quantity) {
+        return new Product(name, price, new ProductId(UUID.randomUUID()), quantity);
     }
 }

@@ -87,8 +87,8 @@ The **API interface layer** exposing RESTful endpoints for client interactions:
 
 **Coverage Thresholds:**
 
-* **Instruction Coverage:** 94%
-* **Branch Coverage:** 92%
+* **Instruction Coverage:** 80%
+* **Branch Coverage:** 80%
 
 ### Development & Documentation
 
