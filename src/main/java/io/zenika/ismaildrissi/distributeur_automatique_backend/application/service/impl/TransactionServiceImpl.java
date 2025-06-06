@@ -22,18 +22,54 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of the TransactionService interface providing transaction management operations.
+ *
+ * <p>This service implementation orchestrates the complete transaction lifecycle in the vending
+ * machine system. It manages the interaction between the domain layer (Transaction, VendingMachine)
+ * and provides a simplified interface for the presentation layer through DTOs.</p>
+ *
+ * <p>The service maintains transaction state throughout the user session and handles:
+ * <ul>
+ *   <li>Transaction creation and lifecycle management</li>
+ *   <li>Money insertion and tracking</li>
+ *   <li>Product selection and validation</li>
+ *   <li>Order completion with product dispensing and change calculation</li>
+ *   <li>Order cancellation with money return</li>
+ *   <li>Data transformation between domain objects and DTOs</li>
+ * </ul></p>
+ *
+ * <p>The service is transactional to ensure data consistency across all operations
+ * and uses dependency injection for all required components.</p>
+ *
+ * @author Ismail Drissi
+ * @since 1.0
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
+    /** Mapper for converting between Money domain objects and MoneyDTOs */
     private final MoneyMapper moneyMapper;
+
+    /** Mapper for converting between SelectedProduct domain objects and SelectedProductDTOs */
     private final SelectedProductMapper selectedProductMapper;
+
+    /** The vending machine domain object for product and change operations */
     private final VendingMachine vendingMachine;
+
+    /** Repository for persisting product updates */
     private final VendingMachineRepository vendingMachineRepository;
 
+    /** The current active transaction, null if no transaction is in progress */
     private Transaction transaction;
 
+    /**
+     * Gets the current transaction, creating a new one if none exists.
+     *
+     * @return the current active transaction
+     */
     private Transaction currentTransaction() {
         if (transaction == null) {
             transaction = new Transaction(UUID.randomUUID().toString());
@@ -41,20 +77,43 @@ public class TransactionServiceImpl implements TransactionService {
         return transaction;
     }
 
+    /**
+     * Creates a new transaction, replacing any existing one.
+     *
+     * @return the newly created transaction
+     */
     private Transaction newTransaction(){
         transaction = new Transaction(UUID.randomUUID().toString());
         return transaction;
     }
 
+    /**
+     * Removes the current transaction, typically after completion or cancellation.
+     */
     private void removeTransaction() {
         this.transaction = null;
     }
 
+    /**
+     * Inserts money into the current transaction.
+     *
+     * @param money the money denomination to insert
+     */
     @Override
     public void insertMoney(MoneyDTO money) {
         currentTransaction().insertMoney(moneyMapper.toDomain(money));
     }
 
+    /**
+     * Selects a product for purchase in the current transaction.
+     *
+     * <p>This method validates that the product exists and is available before
+     * adding it to the transaction. The transaction will enforce business rules
+     * such as sufficient funds validation.</p>
+     *
+     * @param productId the unique identifier of the product to select
+     * @throws ProductNotFoundException if the product is not found or not available
+     */
     @Override
     public void selectProduct(UUID productId) {
         ProductId id = new ProductId(productId);
