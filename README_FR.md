@@ -87,8 +87,8 @@ La couche **API REST** pour l'interaction avec les clients :
 
 **Seuils de Couverture :**
 
-* **Instructions :** 94%
-* **Branches :** 92%
+* **Instructions :** 80%
+* **Branches :** 80%
 
 ### Développement & Documentation
 
