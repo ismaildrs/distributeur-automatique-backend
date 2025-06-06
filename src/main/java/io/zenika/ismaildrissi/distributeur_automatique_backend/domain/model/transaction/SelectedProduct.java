@@ -1,7 +1,8 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction;
 
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.Product;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.ProductId;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.application.dto.SelectedProductDTO;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.Product;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.ProductId;
 
 
 /**
@@ -11,15 +12,23 @@ import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.prod
 
 public class SelectedProduct {
     private final ProductId productId;
+    private final String name;
     /**
      * priceAtSelection is used to store the price at selling time
      * If price changed later, we could keep track of old prices.
      */
     private final double priceAtSelection;
 
-    public SelectedProduct(Product product){
+    public SelectedProduct(ProductId productId, String name, double price) {
+        this.productId = productId;
+        this.name = name;
+        this.priceAtSelection = price;
+    }
+
+    public SelectedProduct(Product product) {
         this.productId = product.productId();
         this.priceAtSelection = product.price();
+        this.name = product.name();
     }
 
     public ProductId productId() {
@@ -28,5 +37,9 @@ public class SelectedProduct {
 
     public double priceAtSelection() {
         return priceAtSelection;
+    }
+
+    public String name() {
+        return name;
     }
 }

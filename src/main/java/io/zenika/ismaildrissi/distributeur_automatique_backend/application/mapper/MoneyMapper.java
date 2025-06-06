@@ -2,20 +2,20 @@ package io.zenika.ismaildrissi.distributeur_automatique_backend.application.mapp
 
 import io.zenika.ismaildrissi.distributeur_automatique_backend.application.dto.MoneyDTO;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction.Money;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class MoneyMapper {
 
-    ModelMapper modelMapper;
-
     public Money toDomain(MoneyDTO moneyDTO){
-        return modelMapper.map(moneyDTO, Money.class);
+        return new Money(moneyDTO.getValue());
     }
 
     public MoneyDTO toDTO(Money money){
-        return modelMapper.map(money, MoneyDTO.class);
+        return new MoneyDTO(money.value());
     }
 
 }

@@ -1,4 +1,4 @@
-package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product;
+package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine;
 
 import java.util.Objects;
 import java.util.UUID;

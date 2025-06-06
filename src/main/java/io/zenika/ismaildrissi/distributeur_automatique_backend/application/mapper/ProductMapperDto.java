@@ -1,17 +1,24 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.application.mapper;
 
 import io.zenika.ismaildrissi.distributeur_automatique_backend.application.dto.ProductDTO;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.Product;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.Product;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProductMapper {
+@AllArgsConstructor
+public class ProductMapperDto {
 
     ModelMapper modelMapper;
 
     public ProductDTO toDTO(Product product) {
-        return modelMapper.map(product, ProductDTO.class);
+        ProductDTO productDTO = new ProductDTO();
+        productDTO.setId(product.productId().id());
+        productDTO.setName(product.name());
+        productDTO.setPrice(product.price());
+        productDTO.setQuantity(product.quantity());
+        return productDTO;
     }
 
     public Product toDomain(ProductDTO productDTO) {

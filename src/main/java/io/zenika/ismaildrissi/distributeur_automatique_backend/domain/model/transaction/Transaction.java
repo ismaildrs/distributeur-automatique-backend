@@ -1,39 +1,53 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction;
 
 
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.Product;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.Product;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.ProductId;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.service.ChangeCalculator;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction.exceptions.IllegalTransactionStateException;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.transaction.exceptions.InsufficientFundsException;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.service.impl.ChangeCalculatorImpl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Transaction {
     String id;
     List<Money> insertedMoney;
     List<SelectedProduct> selectedProducts;
+    Set<Product> updatedProducts;
     TransactionStatus status;
-
-    ChangeCalculator changeCalculator;
 
     public Transaction(String id) {
         this.id = id;
         this.selectedProducts = new ArrayList<>();
         this.insertedMoney = new ArrayList<>();
+        this.updatedProducts = new HashSet<>();
         this.status = TransactionStatus.IN_PROGRESS;
-        this.changeCalculator = new ChangeCalculatorImpl();
     }
 
     public void addProduct(Product product) {
         if (status != TransactionStatus.IN_PROGRESS) {
             throw new IllegalTransactionStateException("Cannot add products to a completed transaction.");
-        } else if (product.price() < totalInsertedAmount()) {
+        }
+        if (product.price() > totalInsertedAmount()) {
             throw new InsufficientFundsException("Cannot add product due to insufficient funds.");
         }
         selectedProducts.add(new SelectedProduct(product));
+        updatedProducts.add(product);
+    }
+
+
+    public void removeProduct(Product product) {
+        if (status != TransactionStatus.IN_PROGRESS) {
+            throw new IllegalTransactionStateException("Cannot remove products from a completed transaction.");
+        }
+        for (SelectedProduct selectedProduct : selectedProducts) {
+            if(selectedProduct.productId().equals(product.productId())) {
+                selectedProducts.remove(selectedProduct);
+                return;
+            }
+        }
+        updatedProducts.add(product);
     }
 
     public void insertMoney(Money money) {
@@ -68,8 +82,7 @@ public class Transaction {
             throw new InsufficientFundsException("Inserted amount is less than the total price.");
         }
         status = TransactionStatus.COMPLETED;
-        List<Money> returnedMoney = changeCalculator.calculateChange(totalCost);
-        return new TransactionResult(selectedProducts(), returnedMoney);
+        return new TransactionResult(selectedProducts(), insertedMoney(), totalPrice(), updatedProducts);
     }
 
     public TransactionResult cancel() {
@@ -77,7 +90,7 @@ public class Transaction {
             throw new IllegalTransactionStateException("Cannot cancel a completed transaction.");
         }
         status = TransactionStatus.CANCELLED;
-        return new TransactionResult(Collections.emptyList(), insertedMoney());
+        return new TransactionResult(Collections.emptyList(), insertedMoney(), 0.0, updatedProducts);
     }
 
     public String id() {

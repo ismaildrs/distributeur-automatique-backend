@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class MoneyDTO {
-    Double value;
+    double value;
 }

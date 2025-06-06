@@ -1,6 +1,6 @@
-package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product;
+package io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine;
 
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.exceptions.IllegalProductQuantity;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.exceptions.IllegalProductQuantity;
 
 /**
  * Represents an actual product in our vending machine

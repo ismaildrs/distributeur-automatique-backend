@@ -1,10 +1,12 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.application.service.impl;
 
 import io.zenika.ismaildrissi.distributeur_automatique_backend.application.dto.ProductDTO;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.application.mapper.ProductMapper;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.application.mapper.ProductMapperDto;
 import io.zenika.ismaildrissi.distributeur_automatique_backend.application.service.ProductService;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.ProductId;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.repository.ProductRepository;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.ProductId;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.repository.VendingMachineRepository;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,17 +15,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
+@Transactional
 public class ProductServiceImpl implements ProductService {
-    ProductRepository productRepository;
-    ProductMapper productMapper;
+    VendingMachineRepository productRepository;
+    ProductMapperDto productMapper;
 
     @Override
     public List<ProductDTO> listProducts() {
-        return productRepository.findAll().stream().map(productMapper::toDTO).collect(Collectors.toList());
+        return productRepository.findAllProducts().stream().map(productMapper::toDTO).collect(Collectors.toList());
     }
 
     @Override
     public Optional<ProductDTO> getProductById(UUID productId) {
-        return productRepository.findById(new ProductId(productId)).map(productMapper::toDTO);
+        return productRepository.findProductById(new ProductId(productId)).map(productMapper::toDTO);
     }
 }

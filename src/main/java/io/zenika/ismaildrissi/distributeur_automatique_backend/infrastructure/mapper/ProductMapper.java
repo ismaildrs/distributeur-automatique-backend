@@ -1,7 +1,8 @@
 package io.zenika.ismaildrissi.distributeur_automatique_backend.infrastructure.mapper;
 
-import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.product.Product;
-import io.zenika.ismaildrissi.distributeur_automatique_backend.infrastructure.repository.entity.ProductEntity;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.Product;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.domain.model.vendingmachine.ProductId;
+import io.zenika.ismaildrissi.distributeur_automatique_backend.infrastructure.entity.ProductEntity;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -13,11 +14,18 @@ public class ProductMapper {
     ModelMapper modelMapper;
 
     public Product toDomain(ProductEntity productEntity) {
-        return modelMapper.map(productEntity, Product.class);
+        Product product = new Product(productEntity.getName(), productEntity.getPrice(), new ProductId(productEntity.getId()), productEntity.getQuantity());
+        return product;
     }
 
     public ProductEntity toEntity(Product product) {
-        return modelMapper.map(product, ProductEntity.class);
+        ProductEntity productEntity = new ProductEntity();
+        productEntity.setId(product.productId().id());
+        productEntity.setName(product.name());
+        productEntity.setPrice(product.price());
+        productEntity.setQuantity(product.quantity());
+
+        return productEntity;
     }
 
 }
