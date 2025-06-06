@@ -2,7 +2,7 @@
 
 [![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](https://github.com/ismaildrs/distributeur-automatique-backend)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/projects/jdk/17/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-green.svg)](https://spring.io/projects/spring-boot)
 
 A comprehensive Spring Boot backend application implementing a **vending machine system** using **Domain-Driven Design (DDD)** architectural principles. This solution manages the complete transaction lifecycle, inventory control, and monetary operations.
 
@@ -33,7 +33,6 @@ The **core business logic layer** containing pure domain models, entities, value
 * Transaction lifecycle and state management
 * Monetary operations with denomination validation
 * Change calculation algorithms using greedy optimization
-* Business rule enforcement and domain invariants
 
 #### **Application Layer**
 
@@ -51,9 +50,6 @@ The **technical implementation layer** providing concrete implementations for ex
 
 * JPA-based persistence with Spring Data repositories
 * Database entity mapping and relationship management
-* External service integrations and adapters
-* Configuration management and dependency injection
-* Cross-cutting concerns like logging and monitoring
 
 #### **Presentation Layer (Controller)**
 
@@ -64,13 +60,13 @@ The **API interface layer** exposing RESTful endpoints for client interactions:
 
 ### Layer Interaction Principles
 
-![](screenshots/layer_architecture.png)
+![Layer Interaction Architecture](screenshots/layer_architecture.png)
 
 ## Technology Stack
 
 ### Core Framework
 
-* **Spring Boot 3.x** – Enterprise application framework with auto-configuration and production-ready features
+* **Spring Boot 3** – Enterprise application framework with auto-configuration and production-ready features
 * **Spring Data JPA** – Data access layer with repository pattern implementation and query optimization
 * **Spring Web** – RESTful web services with comprehensive HTTP support and content negotiation
 
