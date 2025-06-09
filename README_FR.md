@@ -1,219 +1,202 @@
-# Backend du Distributeur Automatique
+# Distributeur Automatique - Backend
 
-[![Couverture](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](https://github.com/ismaildrs/distributeur-automatique-backend)
-[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.java.net/projects/jdk/17/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
+![Spring](https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge\&logo=spring\&logoColor=white)
 
-Une application backend complète avec **Spring Boot** implémentant un **système de distributeur automatique** selon les principes de l'architecture **Domain-Driven Design (DDD)**. Cette solution gère le cycle de vie complet des transactions, le contrôle de l'inventaire et les opérations monétaires.
+Application backend Spring Boot implémentant un **système de distributeur automatique** basé sur le **Domain-Driven Design (DDD)**. Le système gère le cycle de vie des transactions, le contrôle des stocks et les opérations monétaires avec une séparation architecturale claire.
 
-## Table des Matières
+## Table des matières
 
-* [Présentation du Projet](#présentation-du-projet)
-* [Stack Technologique](#stack-technologique)
-* [Structure du Projet](#structure-du-projet)
-* [Tests & Qualité du Code](#tests-et-qualité-du-code)
+* [Présentation du projet](#présentation-du-projet)
+* [Intuition](#intuition)
+* [Architecture](#architecture)
+* [Structure du projet](#structure-du-projet)
+* [Tests et qualité du code](#tests-et-qualité-du-code)
 * [Documentation](#documentation)
-* [Modèle de Domaine](#diagramme-de-classes-du-domaine)
-* [Démarrage Rapide](#démarrage-rapide)
-* [Documentation de l'API](#documentation-de-lapi)
+* [Modèle de domaine](#modèle-de-domaine)
+* [Démarrage](#démarrage)
+* [Documentation API](#documentation-api)
 
-## Présentation du Projet
+## Présentation du projet
 
-Ce backend de **distributeur automatique** est basé sur **Spring Boot** et conçu selon les principes **DDD** pour offrir une solution robuste, maintenable et évolutive. Il orchestre des processus métier complexes tels que la gestion des transactions, le contrôle de l'inventaire, la validation monétaire et le calcul de la monnaie rendue.
+Ce backend pour un **distributeur automatique** est développé avec **Spring Boot** et respecte les principes du **DDD** pour assurer une forte cohésion et un faible couplage. Il prend en charge des workflows métier complexes tels que la gestion des stocks, l'insertion d'argent, le traitement des transactions et le rendu de la monnaie.
 
-### Architecture
+## Intuition
 
-L'application suit une architecture **DDD en quatre couches** assurant une séparation claire des responsabilités, une testabilité optimale et une grande maintenabilité :
+Voici la démarche qui a guidé la conception de ce projet.
 
-#### **Couche Domaine**
+J’ai commencé par définir des principes de conception en me basant sur le fonctionnement classique d’un distributeur automatique et les scénarios fournis. En général, le processus est simple :
 
-La couche **cœur du métier** contenant les modèles, entités, objets de valeur et règles métier. Elle est indépendante des technologies :
+1. Insérer de l’argent
+2. Acheter un article
+3. Recevoir la monnaie
+4. Répéter pour un autre article
 
-* Gestion de l'inventaire et validation de disponibilité
-* Gestion du cycle de vie des transactions
-* Validation des dénominations monétaires
-* Algorithmes de calcul de la monnaie
-* Invariants métier et logique métier pure
+Cependant, le second scénario présenté a remis en question ce modèle. L’utilisateur insère de l’argent, choisit **deux produits**, puis finalise la transaction — moment où les produits sont délivrés. Cela nécessite un modèle transactionnel basé sur des **déclencheurs (triggers)** plutôt qu’un processus linéaire.
 
-#### **Couche Application**
+J’ai donc fait un parallèle avec les **transactions en base de données**. Comme en base, où l’on peut démarrer une transaction (implicite ou explicite), exécuter des opérations, puis soit **valider (commit)** soit **annuler (rollback)**, on peut appliquer ce même concept ici.
 
-La couche **orchestration des cas d'usage**, coordonnant les opérations métier :
+* **Démarrage de la transaction :** implicite, déclenché par l’insertion d’une pièce après la fin de la transaction précédente
+* **Opérations :** sélection des produits en fonction des fonds disponibles
+* **Fin de transaction :** déclenchée explicitement par validation ou annulation de l’achat
 
-* Services applicatifs pour les cas d'usage
-* DTO pour la communication externe
-* Mappage entre modèles de domaine et DTO
-* Gestion des exceptions spécifiques à l'application
-* Coordination des processus métier
+Dans ce modèle, la **transaction** est séparée conceptuellement de la **machine** elle-même. La machine maintient son état (stocks, pièces), tandis que la transaction garde la trace des changements temporaires — argent inséré, produits sélectionnés — sans modifier immédiatement la machine.
 
-#### **Couche Infrastructure**
+Une décision clé a été de **lier la sélection des produits aux fonds disponibles** : un produit ne peut être sélectionné que si suffisamment d’argent a été inséré. Cela garantit que la transaction reste toujours dans un état valide, ce qui facilite la validation et évite les incohérences.
 
-La couche **technique**, implémentant les dépendances externes :
+Le **second déclencheur** — qui finalise ou annule la transaction — est explicite, comme un bouton “confirmer” ou “annuler” sur la machine. Si la transaction est annulée, aucun changement n’est appliqué à l’état de la machine : l’argent est restitué et les produits sélectionnés sont ignorés. Si elle est validée, les produits sont délivrés et l’état de la machine mis à jour.
 
-* Persistance via Spring Data JPA
-* Mappage des entités et gestion des relations
-* Intégrations de services externes
-* Injection de dépendances et configurations
-* Journalisation, surveillance
+Cette séparation est efficace car un distributeur sert **un client à la fois**. On peut donc voir la machine et la transaction active comme des **singletons conceptuels** — même si ce ne sont pas des instances singleton au sens technique.
 
-#### **Couche Présentation (Contrôleurs)**
+![Flowchart](screenshots/flowchart.png)
 
-La couche **API REST** pour l'interaction avec les clients :
+Pour calculer la monnaie à rendre après un achat, j’ai utilisé un **algorithme glouton (greedy algorithm)**. Cette approche est à la fois pratique et optimale dans la majorité des cas réels. Le but est de rendre la monnaie avec le **nombre minimal de pièces possible**, en privilégiant les **plus grosses coupures**. Cela présente deux avantages majeurs :
 
-* Gestion des requêtes HTTP
+* Plus rapide et plus pratique pour l’utilisateur qui reçoit moins de pièces
+* Permet à la machine de préserver les petites coupures, souvent nécessaires pour rendre la monnaie avec précision lors des transactions futures
+
+![Greedy Algorithm](screenshots/greedy_algorithm.png)
+
+## Architecture
+
+Ce projet suit une **architecture DDD en quatre couches** :
+
+### Couche Domaine
+
+* Logique métier centrale
+* Entités, objets valeur, règles métier
+* Indépendante des technologies
+* Responsabilités clés :
+
+    * Gestion des stocks
+    * Gestion de l’état des transactions
+    * Validation des coupures monétaires
+    * Calcul de la monnaie via algorithme glouton
+
+### Couche Application
+
+* Orchestration des cas d’usage
+* Gestion des workflows et des DTO
+* Mapping entre modèles domaine et représentations externes
+* Gestion des exceptions applicatives
+
+### Couche Infrastructure
+
+* Implémentations techniques
+* Persistance JPA avec Spring Data
+* Mapping entités ↔ objets domaine
+
+### Couche Présentation
+
+* Exposition des API REST
+* Validation et gestion des requêtes/réponses HTTP
 * Gestion globale des exceptions
 
-### Diagramme d’Interaction des Couches
+### Interaction des couches
 
-![](screenshots/layer_architecture.png)
+![Layer Interaction Architecture](screenshots/layer_architecture.png)
 
-## Stack Technologique
+## Structure du projet
 
-### Frameworks
-
-* **Spring Boot 3.x** – Framework d'application avec configuration automatique
-* **Spring Data JPA** – Accès aux données via le pattern Repository
-* **Spring Web** – Création de services REST
-
-### Base de Données & Persistance
-
-* **H2** – Base en mémoire pour développement/test
-* **JPA/Hibernate** – ORM avec optimisation
-
-### Tests & Qualité
-
-* **JUnit 5** – Tests unitaires et paramétrés
-* **Mockito** – Mocking et vérification
-* **JaCoCo** – Couverture de code intégrée au build
-
-**Seuils de Couverture :**
-
-* **Instructions :** 80%
-* **Branches :** 80%
-
-### Développement & Documentation
-
-* **Lombok** – Réduction du code boilerplate
-* **Javadoc** – Génération de documentation API
-* **Maven** – Gestion des dépendances et du cycle de vie
-
-## Structure du Projet
-
-Le projet suit une **architecture propre (clean architecture)** avec inversion de dépendances :
-
-```
+```text
 src/main/java/io/zenika/ismaildrissi/distributeur_automatique_backend/
-│
-├── domain/                     # Logique métier
-│   ├── model/                  # Modèles métiers
-│   │   ├── vendingmachine/    # Produits & machine
-│   │   └── transaction/       # Transactions
-│   ├── repository/            # Interfaces de dépôt
-│   └── service/               # Services métier
-│
-├── application/               # Cas d’usage
-│   ├── dto/                   # Objets de transfert
-│   ├── service/               # Services applicatifs
-│   ├── mapper/                # Mappage DTO ↔ Domaine
-│   └── exceptions/            # Exceptions spécifiques
-│
-├── infrastructure/            # Implémentations techniques
-│   ├── repository/            # JPA et implémentations
-│   └── mapper/                # Mappage entité ↔ domaine
-│
-├── controller/                # API REST
-│   └── rest/                  # Contrôleurs REST
-│
+├── domain/                # Logique métier
+│   ├── model/             # Modèles et objets valeur du domaine
+│   ├── repository/        # Interfaces des repositories
+│   └── service/           # Services métier
+├── application/           # Cas d’usage, DTOs, services
+├── infrastructure/        # Repositories JPA, mappers entités
+├── controller/            # Contrôleurs REST
 └── DistributeurAutomatiqueBackendApplication.java
 ```
 
-## Tests et Qualité du Code
+## Tests et qualité du code
 
-### Stratégie Complète de Tests
+### Stratégie
 
-L'application applique une **stratégie multi-niveaux** pour la fiabilité et conformité métier :
+Le projet utilise **JUnit 5**, **Mockito** et **JaCoCo**. Seuils de couverture :
 
-#### Statistiques de Test
+* **Couverture instruction** : 80%
+* **Couverture branche** : 80%
 
-| Métrique                    | Valeur  |
-| --------------------------- | ------- |
-| **Nombre de Tests**         | **125** |
-| **Couverture Instructions** | **94%** |
-| **Couverture Branches**     | **92%** |
+### Résultats
 
-![JavaCoCo Tests](screenshots/testing.png)
+| Indicateur             | Valeur |
+| ---------------------- | ------ |
+| Nombre total de tests  | 125    |
+| Couverture instruction | 94%    |
+| Couverture branche     | 92%    |
+
+![Testing](screenshots/testing.png)
 
 ## Documentation
 
-### Documentation Javadoc
+### Javadoc
 
-Toute la base de code est documentée selon les standards industriels :
-
-#### Génération de la Documentation
+Génération avec :
 
 ```bash
 mvn javadoc:javadoc
 open target/site/apidocs/index.html
 ```
 
-![Javadoc Vue d'ensemble](screenshots/docs.png)
-![Javadoc Capture](screenshots/docs2.png)
+![Javadoc](screenshots/docs.png)
+![Javadoc2](screenshots/docs2.png)
 
-## Diagramme de Classes du Domaine
+## Modèle de domaine
 
-Le diagramme suivant illustre la structure principale des modèles métier :
+### Diagramme
 
-![Diagramme Modèles](screenshots/diagram.png)
+![Domain Models](screenshots/diagram.png)
 
-### Analyse du Modèle
+### Éléments clés
 
-#### Entités
+#### Racines d’agrégat
 
-* **Product** : Gère le stock et les règles de disponibilité
-* **VendingMachine** : Agrégat central
-* **Transaction** : Orchestration du processus d’achat
-* **TransactionResult** : Résultat de transaction
+* **Product (Produit)** : gestion des stocks et validation
+* **VendingMachine (Distributeur)** : coordinateur central
+* **Transaction** : gestion du cycle de vie
+* **TransactionResult** : encapsulation du résultat de transaction
 
-#### Objets de Valeur
+#### Objets valeur
 
-* **ProductId** : Identifiant typé
-* **Money** : Représentation monétaire immuable
-* **SelectedProduct** : Snapshot produit sélectionné
+* **ProductId** : identifiant typé
+* **Money (Argent)** : validation des coupures MAD
+* **SelectedProduct** : snapshot immuable de la sélection
 
-#### Règles Métiers
+#### Règles appliquées
 
-* **Validation Monétaire** : Seulement pièces valides (0.5, 1.0, 2.0, 5.0, 10.0 MAD)
-* **Contraintes d’Inventaire** : Pas de distribution hors stock
-* **Transitions de Transaction** : Respect des états autorisés
-* **Calcul de la Monnaie** : Algorithme optimal basé sur l’inventaire
+* Acceptation uniquement des coupures MAD valides
+* Empêche la délivrance hors stock
+* Transitions d’état de transaction valides uniquement
+* Calcul optimal de la monnaie via algorithme glouton
 
-## Démarrage Rapide
+## Démarrage
 
 ```bash
 git clone https://github.com/ismaildrs/distributeur-automatique-backend.git
 cd distributeur-automatique-backend
-
 mvn clean test
 mvn jacoco:report
 mvn spring-boot:run
-
-curl http://localhost:8080/api/products
 ```
 
-## Documentation de l’API
+**Puis accéder à la documentation Swagger via : `http://localhost:8080/swagger-ui/index.html#/`**
+
+## Documentation API
 
 ### Swagger
 
-![Swagger API](screenshots/swagger_docs.png)
+![Swagger](screenshots/swagger_docs.png)
 
-### Points de Terminaison Clés
+### Endpoints
 
-#### Gestion des Produits
+#### Gestion des produits
 
 ```http
 GET /api/products
 ```
 
-#### Opérations de Transaction
+#### Gestion des transactions
 
 ```http
 POST /api/transaction/money
@@ -227,35 +210,17 @@ POST /api/transaction/complete
 POST /api/transaction/cancel
 ```
 
-#### État de la Transaction
+#### Statut
 
 ```http
 GET /api/transaction/money/inserted
 GET /api/transaction/products/selected
 ```
 
-### Tests API avec Postman
+### Captures Postman
 
-#### Produits
-
-![Produits API](screenshots/getAllproducts.png)
-
-#### Ajouter de l’Argent
-
-![Ajouter Argent API](screenshots/add_money.png)
-
-#### Sélectionner Produit
-
-![Sélectionner Produit API](screenshots/select_product.png)
-
-#### Produits Sélectionnés
-
-![Produits Sélectionnés API](screenshots/select_product.png)
-
-#### Terminer Transaction
-
-![Terminer Transaction API](screenshots/complete_order.png)
-
-#### Annuler Transaction
-
-![Annuler Transaction API](screenshots/cancel_order.png)
+* Obtenir tous les produits : ![Get](screenshots/getAllproducts.png)
+* Insérer de l’argent : ![Money](screenshots/add_money.png)
+* Sélectionner un produit : ![Select](screenshots/select_product.png)
+* Finaliser la transaction : ![Complete](screenshots/complete_order.png)
+* Annuler la transaction : ![Cancel](screenshots/cancel_order.png)

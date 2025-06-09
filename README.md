@@ -7,6 +7,7 @@ A Spring Boot backend application implementing a **vending machine system** base
 ## Table of Contents
 
 * [Project Overview](#project-overview)
+* [Intuition](#intuition)
 * [Architecture](#architecture)
 * [Project Structure](#project-structure)
 * [Testing and Code Quality](#testing-and-code-quality)
@@ -18,6 +19,42 @@ A Spring Boot backend application implementing a **vending machine system** base
 ## Project Overview
 
 This backend system for a **Vending Machine** is developed with **Spring Boot** and adheres to **DDD** principles for high cohesion and low coupling. It handles complex business workflows such as inventory checks, money insertion, transaction processing, and change return.
+
+## Intuition
+
+Here is the thought process that guided the design of this project.
+
+I began by identifying key design principles, starting with how a typical vending machine works based on known behavior and the provided scenarios. Normally, the flow is simple:
+
+1. Insert money
+2. Buy one item
+3. Receive your change
+4. Repeat the process for another item
+
+However, the second scenario you described challenged this model. In it, the user inserts money, selects **two products**, and only **then** completes the transaction—at which point the products are dispensed. This revealed a need for a **trigger-based transactional model** rather than a linear one.
+
+That led me to an analogy with **database transactions**. Just like in databases, where we can start a transaction (implicitly or explicitly), perform a series of operations, and then either **commit** or **rollback**, the same concept can apply to our vending machine.
+
+* **Start Transaction:** Implicit, triggered by inserting money after the previous transaction is complete
+* **Perform Operations:** Select products based on available funds
+* **End Transaction:** Explicitly triggered by either completing or canceling the purchase
+
+In this model, the **transaction** is conceptually separate from the **vending machine** itself. The vending machine maintains its state (inventory and coin stock), while the transaction tracks temporary state changes—inserted money and selected products—without immediately altering the machine.
+
+A key design decision was to **tie product selection to available funds**. That is, a user can only select a product if they have already inserted enough money to cover it. This ensures that the transaction remains in a valid state at all times—moving only between valid configurations. This simplifies validation and avoids handling inconsistent states later in the process.
+
+The **second trigger**—the action that completes or cancels the transaction—is handled explicitly. For example, a "confirm purchase" or "cancel" button in a real machine. If the transaction is canceled, no changes are applied to the vending machine's state: the inserted money is returned, and the selected products are discarded. If it's completed, the products are dispensed and the machine's state is updated accordingly.
+
+This separation of concerns works well because a vending machine typically serves **one customer at a time**. So, we can treat the vending machine and the active transaction as **conceptual singletons**—even if not implemented as literal singleton instances.
+
+![Flowchart](screenshots/flowchart.png)
+
+To calculate the change to be returned after a purchase, I used a **greedy algorithm**. This decision is both practical and optimal in most real-world scenarios. The goal is to return change using the **fewest number of coins possible**, prioritizing **larger denominations first**. This has two key advantages:
+
+* It is faster and more convenient for the user to receive fewer coins.
+* It helps the machine preserve smaller denominations, which are often needed to provide accurate change in future transactions.
+
+![Greedy Algorithm](screenshots/greedy_algorithm.png)
 
 ## Architecture
 
@@ -143,7 +180,7 @@ mvn jacoco:report
 mvn spring-boot:run
 ```
 
-Visit: `http://localhost:8080/api/products`
+Visit Swagger documentation: `http://localhost:8080/swagger-ui/index.html#/`
 
 ## API Documentation
 
